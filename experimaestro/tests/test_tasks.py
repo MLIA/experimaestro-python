@@ -173,3 +173,20 @@ def test_configcache():
         task = CacheConfigTask(data=CacheConfig()).submit()
 
     assert task.__xpm__.job.wait() == JobState.DONE
+
+
+def test_multitask():
+    """Test multitask tasks"""
+    with TemporaryExperiment("configcache", maxwait=10) as xp:
+        taskA, taskB = MultiTask(c=1).submit()
+
+        xp.wait()
+        timeA = taskA.stdout().read_text()
+        timeB = taskB.stdout().read_text()
+
+        taskA_ = MultiTaskA(a=1).submit()
+        taskB_ = MultiTaskB(b=1).submit()
+        xp.wait()
+
+        assert taskA_.stdout().read_text() == timeA
+        assert taskB_.stdout().read_text() == timeB

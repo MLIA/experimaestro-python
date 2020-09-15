@@ -4,6 +4,7 @@ from pathlib import Path
 from .annotations import (
     config,
     task,
+    multitask,
     param,
     option,
     pathoption,
@@ -16,7 +17,6 @@ from .annotations import (
     tag,
     STDOUT,
     STDERR,
-
     # deprecated
     argument,
 )
@@ -27,6 +27,7 @@ from .notifications import progress
 from .register import parse_commandline
 from .core.types import Any
 from .checkers import Choices
+
 
 def set_launcher(launcher):
     Workspace.CURRENT.launcher = launcher

@@ -23,10 +23,12 @@ from .checkers import Checker
 
 # --- Annotations to define tasks and types
 
+
 def configmethod(method):
     """Annotate a method that should be kept in the configuration object"""
     method.__xpmconfig__ = True
     return method
+
 
 class config:
 
@@ -34,14 +36,14 @@ class config:
 
     def __init__(self, identifier=None, description=None, register=True, parents=[]):
         """[summary]
-        
+
         Keyword Arguments:
             identifier {Identifier, str} -- Unique identifier of the type (default: {None})
             description {str} -- Description of the config/task (default: {None})
             parents {list} -- Parent classes if annotating a method (default: {[]})
             register {bool} -- False if the type should not be registered (debug only)
 
-        
+
         The identifier, if not specified, will be set to `X.CLASSNAME`(by order of priority),
         where X is:
             - the parent identifier
@@ -59,22 +61,22 @@ class config:
     def __call__(self, tp, originaltype=None, basetype=Config):
         """Annotate the class
 
-        Depending on whether we are running or configuring, 
+        Depending on whether we are running or configuring,
         the behavior is different:
 
         - when configuring, we return a proxy class
         - when running, we return the same class
-        
+
         Arguments:
             tp {[type]} -- Can be a method or a class
-        
+
         Keyword Arguments:
             originaltype {[type]} -- The original type
             basetype {[type]} -- [description] The base type of the class
-        
+
         Raises:
             ValueError: [description]
-        
+
         Returns:
             [type] -- [description]
         """
@@ -126,12 +128,10 @@ class config:
         tp.__xpm__ = objecttype
         objecttype.originaltype = originaltype
         if originaltype.__module__ and originaltype.__module__ != "__main__":
-            objecttype._module = originaltype.__module__ 
+            objecttype._module = originaltype.__module__
         else:
             objecttype._module = None
         objecttype._file = Path(inspect.getfile(originaltype)).absolute()
-
-
 
         # Adding type-hinted arguments
         if hasattr(originaltype, "__annotations__"):
@@ -150,7 +150,7 @@ class config:
                         Type.fromType(valuetype),
                         default=getattr(originaltype, key, None),
                         required=required,
-                        help=value.help
+                        help=value.help,
                     )
                     objecttype.addArgument(argument)
 
@@ -219,6 +219,11 @@ class task(config):
         return tp
 
 
+class multitask(task):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
 # --- argument related annotations
 
 
@@ -233,7 +238,7 @@ class param:
         required: bool = None,
         ignored: Optional[bool] = None,
         help: Optional[str] = None,
-        checker: Optional[Checker] = None
+        checker: Optional[Checker] = None,
     ):
         # Determine if required
         self.name = name
@@ -267,23 +272,25 @@ class param:
             ignored=self.ignored,
             generator=self.generator,
             default=self.default,
-            checker=self.checker
+            checker=self.checker,
         )
         tp.__xpm__.addArgument(argument)
         return tp
 
+
 # Just a rebind (back-compatibility)
 argument = param
+
 
 class option(param):
     """An argument which is ignored
 
     See argument
     """
+
     def __init__(self, *args, **kwargs):
         kwargs["ignored"] = True
         super().__init__(*args, **kwargs)
-
 
 
 class pathoption(param):
@@ -301,8 +308,10 @@ class pathoption(param):
         else:
             self.generator = lambda jobcontext: jobcontext.jobpath / path
 
+
 STDERR = lambda jobcontext: "%s.err" % jobcontext.name
 STDOUT = lambda jobcontext: "%s.out" % jobcontext.name
+
 
 class ConstantParam(argument):
     """
@@ -310,26 +319,25 @@ class ConstantParam(argument):
     """
 
     def __init__(self, name: str, value, xpmtype=None, help=""):
-        super().__init__(
-            name, type=xpmtype or Type.fromType(type(value)), help=help
-        )
+        super().__init__(name, type=xpmtype or Type.fromType(type(value)), help=help)
         self.generator = lambda jobcontext: objects.clone(value)
 
 
 Param = TypeHint()
 
 
-
 # --- Cache
 
+
 def cache(name: str):
-    """Use a cache path for a given config
-    """
+    """Use a cache path for a given config"""
+
     def annotate(method):
-        
+
         return objects.cache(method, name)
-    
+
     return annotate
+
 
 # --- Tags
 

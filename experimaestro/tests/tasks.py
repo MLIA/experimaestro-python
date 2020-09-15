@@ -1,4 +1,5 @@
 import time
+from typing import Tuple
 from experimaestro import *
 
 tasks = Identifier("tasks")
@@ -81,7 +82,7 @@ class SetUnknown:
         self.abc = 1
 
 
-"""Check that config works properly"""
+# --- Cached methods
 
 
 @config()
@@ -98,3 +99,33 @@ class CacheConfig:
 class CacheConfigTask:
     def execute(self):
         assert self.data.get() == "hello"
+
+
+# --- Multitask
+
+
+@pathoption("out", "a.txt")
+@param("a", type=int)
+@task()
+class MultiTaskA:
+    def __execute__(self):
+        print(time.time())
+
+
+@pathoption("out", "a.txt")
+@param("b", type=int)
+@task()
+class MultiTaskB:
+    def execute(self):
+        print(time.time())
+
+
+@param("c", type=int)
+@multitask()
+class MultiTask:
+    def __outputs__(self) -> Tuple[MultiTaskA, MultiTaskB]:
+        return [MultiTaskA(a=self.c), MultiTaskB(b=self.c)]
+
+    def execute(self):
+        for task in tasks:
+            task.execute()
